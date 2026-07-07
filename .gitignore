@@ -1,1 +1,8 @@
 docs/superpowers/
+.superpowers/
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+.build/
