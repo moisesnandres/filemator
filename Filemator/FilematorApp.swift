@@ -21,5 +21,9 @@ struct FilematorApp: App {
             MenuBarView(appState: appState)
         }
         .menuBarExtraStyle(.window)
+
+        WindowGroup("Filemator", id: "main") {
+            MainWindowView(appState: appState)
+        }
     }
 }

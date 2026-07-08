@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
     @ObservedObject var historyStore: HistoryStore
+    @Environment(\.openWindow) private var openWindow
 
     init(appState: AppState) {
         self.appState = appState
@@ -27,6 +28,10 @@ struct MenuBarView: View {
             }
 
             Divider()
+
+            Button("Open Filemator") {
+                openWindow(id: "main")
+            }
 
             Button("Quit Filemator") {
                 NSApplication.shared.terminate(nil)
