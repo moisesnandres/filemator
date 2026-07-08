@@ -13,6 +13,9 @@ struct MainWindowView: View {
 
             HistoryView(appState: appState)
                 .tabItem { Label("History", systemImage: "clock") }
+
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
         .frame(minWidth: 480, minHeight: 360)
     }
