@@ -1,11 +1,26 @@
 import Combine
 import Foundation
 
+enum UndoError: Error, LocalizedError {
+    case sourceAlreadyOccupied
+    case fileMissingAtDestination
+
+    var errorDescription: String? {
+        switch self {
+        case .sourceAlreadyOccupied:
+            return "A file already exists at the original location."
+        case .fileMissingAtDestination:
+            return "The moved file could not be found — it may have been renamed or deleted."
+        }
+    }
+}
+
 @MainActor
 final class AppState: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var rules: [Rule]
     @Published private(set) var watchedFolders: [WatchedFolder]
+    @Published private(set) var unavailableFolderIDs: Set<UUID> = []
 
     let historyStore: HistoryStore
 
@@ -56,13 +71,38 @@ final class AppState: ObservableObject {
         watchers[folder.id]?.stop()
         watchers.removeValue(forKey: folder.id)
         watchedFolders.removeAll { $0.id == folder.id }
+        unavailableFolderIDs.remove(folder.id)
         watchedFoldersStore.save(watchedFolders)
     }
 
-    private func startWatching(_ folder: WatchedFolder) {
-        let watcher = FolderWatcher(folderURL: folder.path) { [weak self] fileURL in
-            self?.handleNewFile(fileURL)
+    func undo(_ entry: HistoryEntry) throws {
+        guard case .success = entry.status else { return }
+
+        if FileManager.default.fileExists(atPath: entry.sourcePath.path) {
+            throw UndoError.sourceAlreadyOccupied
         }
+        guard FileManager.default.fileExists(atPath: entry.destinationPath.path) else {
+            throw UndoError.fileMissingAtDestination
+        }
+
+        try FileManager.default.moveItem(at: entry.destinationPath, to: entry.sourcePath)
+        var updated = entry
+        updated.status = .undone
+        historyStore.update(updated)
+    }
+
+    private func startWatching(_ folder: WatchedFolder) {
+        let watcher = FolderWatcher(
+            folderURL: folder.path,
+            onNewFile: { [weak self] fileURL in
+                self?.handleNewFile(fileURL)
+            },
+            onUnavailable: { [weak self] in
+                Task { @MainActor in
+                    self?.unavailableFolderIDs.insert(folder.id)
+                }
+            }
+        )
         watcher.start()
         watchers[folder.id] = watcher
     }

@@ -5,6 +5,7 @@ final class FolderWatcher {
     private let ignoredExtensions: Set<String>
     private let debounceInterval: TimeInterval
     private let onNewFile: (URL) -> Void
+    private let onUnavailable: () -> Void
 
     private var fileDescriptor: CInt = -1
     private var source: DispatchSourceFileSystemObject?
@@ -15,12 +16,14 @@ final class FolderWatcher {
         folderURL: URL,
         ignoredExtensions: Set<String> = ["crdownload", "download", "part", "tmp"],
         debounceInterval: TimeInterval = 0.3,
-        onNewFile: @escaping (URL) -> Void
+        onNewFile: @escaping (URL) -> Void,
+        onUnavailable: @escaping () -> Void = {}
     ) {
         self.folderURL = folderURL
         self.ignoredExtensions = ignoredExtensions
         self.debounceInterval = debounceInterval
         self.onNewFile = onNewFile
+        self.onUnavailable = onUnavailable
     }
 
     func start() {
@@ -32,11 +35,16 @@ final class FolderWatcher {
         let fd = fileDescriptor
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fileDescriptor,
-            eventMask: .write,
+            eventMask: [.write, .delete],
             queue: DispatchQueue.global(qos: .utility)
         )
-        source.setEventHandler { [weak self] in
-            self?.handleDirectoryChange()
+        source.setEventHandler { [weak self, weak source] in
+            guard let self, let source else { return }
+            if source.data.contains(.delete) {
+                self.onUnavailable()
+                return
+            }
+            self.handleDirectoryChange()
         }
         source.setCancelHandler {
             close(fd)

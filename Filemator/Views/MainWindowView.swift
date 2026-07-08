@@ -10,6 +10,9 @@ struct MainWindowView: View {
 
             WatchedFoldersView(appState: appState)
                 .tabItem { Label("Watched Folders", systemImage: "folder") }
+
+            HistoryView(appState: appState)
+                .tabItem { Label("History", systemImage: "clock") }
         }
         .frame(minWidth: 480, minHeight: 360)
     }

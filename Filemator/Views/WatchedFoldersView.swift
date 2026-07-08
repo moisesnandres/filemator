@@ -8,12 +8,19 @@ struct WatchedFoldersView: View {
         VStack {
             List {
                 ForEach(appState.watchedFolders) { folder in
-                    Text(folder.path.path)
-                        .swipeActions {
-                            Button("Remove", role: .destructive) {
-                                appState.removeWatchedFolder(folder)
-                            }
+                    HStack {
+                        Text(folder.path.path)
+                        if appState.unavailableFolderIDs.contains(folder.id) {
+                            Spacer()
+                            Label("Unavailable", systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.orange)
                         }
+                    }
+                    .swipeActions {
+                        Button("Remove", role: .destructive) {
+                            appState.removeWatchedFolder(folder)
+                        }
+                    }
                 }
             }
 
