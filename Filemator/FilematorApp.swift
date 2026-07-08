@@ -5,11 +5,13 @@ struct FilematorApp: App {
     @StateObject private var appState: AppState
 
     init() {
-        let downloadsURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
-        let pdfDestination = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/Filemator-PDFs")
-        let hardcodedRule = Rule(name: "PDFs", extensions: ["pdf"], nameContains: nil, destination: pdfDestination)
+        let rulesStore = RulesStore()
+        if rulesStore.load().isEmpty {
+            let pdfDestination = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/Filemator-PDFs")
+            rulesStore.save([Rule(name: "PDFs", extensions: ["pdf"], nameContains: nil, destination: pdfDestination)])
+        }
 
-        let state = AppState(watchedFolderURL: downloadsURL, rules: [hardcodedRule])
+        let state = AppState(rulesStore: rulesStore)
         _appState = StateObject(wrappedValue: state)
         state.start()
     }

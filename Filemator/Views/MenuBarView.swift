@@ -2,6 +2,12 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var appState: AppState
+    @ObservedObject var historyStore: HistoryStore
+
+    init(appState: AppState) {
+        self.appState = appState
+        self.historyStore = appState.historyStore
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -10,11 +16,11 @@ struct MenuBarView: View {
 
             Divider()
 
-            if appState.recentHistory.isEmpty {
+            if historyStore.entries.isEmpty {
                 Text("No files moved yet")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(appState.recentHistory) { entry in
+                ForEach(historyStore.entries.prefix(3)) { entry in
                     Text("\(entry.sourcePath.lastPathComponent) → \(entry.destinationPath.deletingLastPathComponent().lastPathComponent)")
                         .font(.caption)
                 }
