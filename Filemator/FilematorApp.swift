@@ -6,7 +6,8 @@ struct FilematorApp: App {
 
     init() {
         let rulesStore = RulesStore()
-        if rulesStore.load().isEmpty {
+        let rulesFileExists = FileManager.default.fileExists(atPath: RulesStore.defaultFileURL.path)
+        if !rulesFileExists {
             let pdfDestination = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Documents/Filemator-PDFs")
             rulesStore.save([Rule(name: "PDFs", extensions: ["pdf"], nameContains: nil, destination: pdfDestination)])
         }

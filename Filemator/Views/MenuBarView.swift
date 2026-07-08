@@ -29,6 +29,14 @@ struct MenuBarView: View {
 
             Divider()
 
+            Button(appState.isRunning ? "Pause Watching" : "Resume Watching") {
+                if appState.isRunning {
+                    appState.stop()
+                } else {
+                    appState.start()
+                }
+            }
+
             Button("Open Filemator") {
                 openWindow(id: "main")
             }
